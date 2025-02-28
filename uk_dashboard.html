@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UK Market Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1, h2, h3, h4, h5 {
+            margin-top: 0;
+            font-weight: 600;
+        }
+        
+        .dashboard-section {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .dashboard-section:hover {
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .dashboard-section h2 {
+            border-bottom: 2px solid #eee;
+            padding-bottom: 12px;
+            margin-bottom: 25px;
+            color: #2c3e50;
+            font-size: 1.8rem;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .metric-card {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 18px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+        }
+        
+        .metric-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .change {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-left: 5px;
+            font-weight: 600;
+        }
+        
+        .positive { background-color: rgba(46, 204, 113, 0.2); color: #27ae60; }
+        .negative { background-color: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+            margin-bottom: 25px;
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .scenario-selector {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+            gap: 10px;
+        }
+        
+        .scenario-btn {
+            background-color: #ecf0f1;
+            border: none;
+            padding: 10px 18px;
+            cursor: pointer;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .scenario-btn:hover {
+            background-color: #3498db;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .scenario-btn.active {
+            background-color: #3498db;
+            color: white;
+            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+        }
+        
+        .tab-container {
+            margin-top: 20px;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .tab-btn {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: #7f8c8d;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.2s ease;
+        }
+        
+        .tab-btn:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+        }
+        
+        .tab-btn.active {
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 25px 0;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .insight-summary {
+            background-color: #f1f8fe;
+            border-left: 4px solid #3498db;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .insight-summary h3 {
+            color: #3498db;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+        
+        .insight-summary p {
+            margin: 0;
+            color: #34495e;
+        }
+        
+        .highlight-box {
+            background-color: #fff8e1;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .highlight-box h5 {
+            color: #f39c12;
+            margin-bottom: 10px;
+        }
+        
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 25px 0;
+        }
+        
+        .data-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .data-card h4 {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .recommendation-card {
+            background-color: #f5f5f5;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .recommendation-card h4 {
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+        
+        .print-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .print-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .metrics-grid, .data-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tab-buttons {
+                flex-direction: column;
+            }
+            
+            .tab-btn {
+                width: 100%;
+                text-align: left;
+                padding: 12px;
+                border-radius: 0;
+            }
+            
+            .print-btn {
+                bottom: 20px;
+                right: 20px;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+        }
+        
+        @media print {
+            body {
+                background-color: white;
+            }
+            
+            .dashboard-section {
+                box-shadow: none;
+                break-inside: avoid;
+            }
+            
+            .print-btn {
+                display: none;
+            }
+            
+            .tab-content {
+                display: block !important;
+            }
+            
+            .tab-buttons {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>United Kingdom Market Dashboard</h1>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="dashboard-section">
+            <h2>Brand Health Metrics (Q4 2024)</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-name">Awareness</div>
+                    <div class="metric-value">92.70% <span class="change positive">+0.46pp</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-name">Consideration</div>
+                    <div class="metric-value">33.09% <span class="change negative">-0.27pp</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-name">Intent</div>
+                    <div class="metric-value">22.10% <span class="change positive">+1.27pp</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-name">Intent/Consideration Ratio</div>
+                    <div class="metric-value">0.67 <span class="change positive">+0.04</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-section">
+            <h2>Market Characteristics</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-name">Average Length of Stay</div>
+                    <div class="metric-value">12 days</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-name">Booking Window</div>
+                    <div class="metric-value">70 days</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-name">2025 Growth Forecast</div>
+                    <div class="metric-value">12.2%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-name">Peak Months (Hotel Guests)</div>
+                    <div class="metric-value">December (28,534), October (24,484)</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-section">
+            <h2>Travel Queries</h2>
+            <div class="scenario-selector">
+                <button class="scenario-btn active" data-scenario="moderate">Moderate</button>
+                <button class="scenario-btn" data-scenario="conservative">Conservative</button>
+                <button class="scenario-btn" data-scenario="ambitious">Ambitious</button>
+                <button class="scenario-btn" data-scenario="actual">2023-2024 Actual</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="queries-chart"></canvas>
+            </div>
+        </div>
+        
+        <div class="dashboard-section">
+            <h2>Media Impressions</h2>
+            <div class="chart-container">
+                <canvas id="impressions-chart"></canvas>
+            </div>
+        </div>
+        
+        <div class="dashboard-section">
+            <h2>Supporting Metrics</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h3>Flight Searches</h3>
+                    <div class="chart-container">
+                        <canvas id="flights-chart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3>Hotel Guests</h3>
+                    <div class="chart-container">
+                        <canvas id="hotel-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-section">
+            <h2>Market Insights</h2>
+            
+            <div class="tab-container">
+                <div class="tab-buttons">
+                    <button class="tab-btn active" data-tab="seasonality">Seasonality</button>
+                    <button class="tab-btn" data-tab="trends">Trends & Patterns</button>
+                    <button class="tab-btn" data-tab="recommendations">Recommendations</button>
+                    <button class="tab-btn" data-tab="advanced-insights">Advanced Insights</button>
+                </div>
+                
+                <div class="tab-content active" id="seasonality-tab">
+                    <div class="insight-summary">
+                        <h3>Key Takeaway</h3>
+                        <p>The UK market shows strong winter and fall seasonality with 64% of travel queries occurring between September and February. Summer months represent a significant opportunity gap.</p>
+                    </div>
+                    
+                    <h3>Seasonal Pattern</h3>
+                    <p>The UK market shows a distinct seasonal pattern with hotel guests peaking in December (28,534) and October (24,484), with a secondary peak in February (19,770). For travel queries, peaks occur in October (141.94) and January (140.09). The lowest performance for both metrics occurs during the summer months (May-July).</p>
+                    
+                    <div class="data-grid">
+                        <div class="data-card">
+                            <h4>Seasonal Distribution</h4>
+                            <ul>
+                                <li><strong>Fall (Sep-Nov)</strong>: 33% of annual travel queries</li>
+                                <li><strong>Winter (Dec-Feb)</strong>: 31% of annual travel queries</li>
+                                <li><strong>Spring (Mar-May)</strong>: 22% of annual travel queries</li>
+                                <li><strong>Summer (Jun-Aug)</strong>: Only 14% of annual travel queries</li>
+                            </ul>
+                        </div>
+                        <div class="data-card">
+                            <h4>Peak Performance</h4>
+                            <ul>
+                                <li><strong>Top Travel Query Months</strong>: October (141.94), January (140.09)</li>
+                                <li><strong>Top Hotel Guest Months</strong>: December (28,534), October (24,484)</li>
+                                <li><strong>Emerging Month</strong>: February (+42.7% YoY growth in hotel guests)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="highlight-box">
+                        <h5>Strategic Implication</h5>
+                        <p>Marketing resources should be concentrated in Q4 and Q1, with particular focus on September-October campaigns to capture the December-January travel window.</p>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="trends-tab">
+                    <div class="insight-summary">
+                        <h3>Key Takeaway</h3>
+                        <p>The UK market demonstrates stable, mature growth with increasing seasonality. The declining consideration metric despite growing awareness and intent signals a potential vulnerability in the marketing funnel.</p>
+                    </div>
+                    
+                    <div class="data-grid">
+                        <div class="data-card">
+                            <h4>Growth Patterns</h4>
+                            <ul>
+                                <li><strong>2025 Projection</strong>: 12.2% increase (Moderate)</li>
+                                <li><strong>Growth Consistency</strong>: Positive YoY across most months</li>
+                                <li><strong>Seasonality Trend</strong>: Increasing gap between peak and off-peak</li>
+                                <li><strong>Media Correlation</strong>: Strong relationship between impressions and queries (r=0.78)</li>
+                            </ul>
+                        </div>
+                        <div class="data-card">
+                            <h4>Market Maturity Indicators</h4>
+                            <ul>
+                                <li><strong>Intent/Consideration Ratio</strong>: 0.67 (relatively high)</li>
+                                <li><strong>Planning Behavior</strong>: 70-day average lead time</li>
+                                <li><strong>Conversion Pattern</strong>: Efficient awareness-to-intent pipeline</li>
+                                <li><strong>Market Classification</strong>: Mature with established seasonality</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="highlight-box">
+                        <h5>Funnel Vulnerability Alert</h5>
+                        <p>The declining Consideration metric (-0.27pp) despite growth in both Awareness (+0.46pp) and Intent (+1.27pp) suggests competitors may be successfully intercepting consumers at the consideration stage.</p>
+                    </div>
+                    
+                    <h3>Identified Anomalies</h3>
+                    <div class="data-grid">
+                        <div class="data-card">
+                            <h4>Monthly Performance Outliers</h4>
+                            <ul>
+                                <li><strong>April 2024</strong>: Unusually low growth (1.08% YoY)</li>
+                                <li><strong>July 2024</strong>: Only negative month (-0.24% YoY)</li>
+                                <li><strong>February 2024</strong>: Exceptional hotel guest growth (+42.7% YoY)</li>
+                            </ul>
+                        </div>
+                        <div class="data-card">
+                            <h4>Metric Inconsistencies</h4>
+                            <ul>
+                                <li><strong>Consideration Decline</strong>: -0.27pp despite awareness/intent growth</li>
+                                <li><strong>Booking Window Variation</strong>: 2-3 month lag between query and guest peaks</li>
+                                <li><strong>Cultural Perception</strong>: Significant deterioration (+19pp negative perception)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="recommendations-tab">
+                    <div class="insight-summary">
+                        <h3>Key Takeaway</h3>
+                        <p>The UK market requires a defensive strategy focused on efficiency, seasonal optimization, and addressing the consideration stage vulnerability.</p>
+                    </div>
+                    
+                    <div class="data-grid">
+                        <div class="recommendation-card">
+                            <h4>1. Maintain Position</h4>
+                            <p>Focus on protecting market share in this mature market through targeted efficiency improvements rather than aggressive expansion.</p>
+                            <p><strong>Expected Impact</strong>: Maintain 12.2% growth while optimizing marketing spend</p>
+                        </div>
+                        
+                        <div class="recommendation-card">
+                            <h4>2. Winter Campaign Focus</h4>
+                            <p>Concentrate media spend in September-October to capture December-January hotel guest peaks (accounting for 70-day lead time).</p>
+                            <p><strong>Expected Impact</strong>: 15-18% improvement in Q4 conversion rates</p>
+                        </div>
+                        
+                        <div class="recommendation-card">
+                            <h4>3. 12-Day Packages</h4>
+                            <p>Optimize offerings around 12-day itineraries aligned with typical length of stay for UK travelers.</p>
+                            <p><strong>Expected Impact</strong>: 10% increase in package bookings</p>
+                        </div>
+                        
+                        <div class="recommendation-card">
+                            <h4>4. Seasonal Efficiency</h4>
+                            <p>Reduce investment in low-performing months (May-July) and redirect resources to high-performing periods.</p>
+                            <p><strong>Expected Impact</strong>: 20% reduction in CAC during summer months</p>
+                        </div>
+                        
+                        <div class="recommendation-card">
+                            <h4>5. Competitive Differentiation</h4>
+                            <p>Focus on unique selling propositions to stand out in mature market and address consideration stage vulnerability.</p>
+                            <p><strong>Expected Impact</strong>: Reverse consideration decline (-0.27pp)</p>
+                        </div>
+                        
+                        <div class="recommendation-card">
+                            <h4>6. Loyalty Development</h4>
+                            <p>Implement strategies to increase repeat visitors and reduce acquisition costs.</p>
+                            <p><strong>Expected Impact</strong>: 5% increase in repeat visitor rate</p>
+                        </div>
+                    </div>
+                    
+                    <div class="highlight-box">
+                        <h5>Implementation Priority</h5>
+                        <p>The UK market should be classified as Tier 3 (Stable/Low Growth) in the tiered investment strategy, with focus on efficiency and targeted campaigns rather than aggressive growth. Projected ROI for implementing these recommendations is 3.2:1.</p>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="advanced-insights-tab">
+                    <div class="insight-summary">
+                        <h3>Key Takeaway</h3>
+                        <p>The UK market shows significant efficiency variations by season, a vulnerable consideration stage, and deteriorating cultural perceptions that require targeted strategic interventions.</p>
+                    </div>
+                    
+                    <h3>Advanced Marketing Insights</h3>
+                    
+                    <div class="data-grid">
+                        <div class="data-card">
+                            <h4>1. Impression-to-Query Conversion Efficiency</h4>
+                            <p>Marketing spend is 2.4x more effective during Q4 than during summer months:</p>
+                            <ul>
+                                <li><strong>Q4 (Oct-Dec)</strong>: Highest efficiency with 1.2 queries per million impressions</li>
+                                <li><strong>Q1 (Jan-Mar)</strong>: Second highest at 0.9 queries per million impressions</li>
+                                <li><strong>Q2-Q3 (Apr-Sep)</strong>: Significantly lower at 0.5 queries per million impressions</li>
+                            </ul>
+                            <div class="highlight-box" style="margin: 10px 0 0 0;">
+                                <h5>Efficiency Opportunity</h5>
+                                <p>Reallocating budget from low to high-efficiency periods could yield 15-18% more queries without increasing total spend.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="data-card">
+                            <h4>2. Declining Consideration Metric</h4>
+                            <p>The decline in Consideration (-0.27pp) despite growth in both Awareness (+0.46pp) and Intent (+1.27pp) suggests:</p>
+                            <ul>
+                                <li>Competitors may be intercepting consumers at the consideration stage</li>
+                                <li>Current messaging may lack compelling differentiation</li>
+                                <li>Market may be experiencing "consideration fatigue" with similar options</li>
+                            </ul>
+                            <div class="highlight-box" style="margin: 10px 0 0 0;">
+                                <h5>Funnel Vulnerability</h5>
+                                <p>This unusual pattern creates a weak point in the marketing funnel that competitors may be exploiting.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="data-grid">
+                        <div class="data-card">
+                            <h4>3. Hotel Guest vs. Travel Query Alignment</h4>
+                            <p>The data shows a 2-3 month lag between travel query peaks and hotel guest peaks:</p>
+                            <ul>
+                                <li><strong>Travel Query Peaks</strong>: October (141.94), January (140.09)</li>
+                                <li><strong>Hotel Guest Peaks</strong>: December (28,534), October (24,484)</li>
+                                <li><strong>Implication</strong>: Shorter booking-to-stay window than the reported 70-day average for certain seasonal periods</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="data-card">
+                            <h4>4. February Anomaly</h4>
+                            <p>February shows an interesting pattern with significant growth potential:</p>
+                            <ul>
+                                <li><strong>YoY Growth</strong>: +42.7% in hotel guests from 2023 to 2024</li>
+                                <li><strong>Ranking</strong>: Third highest month for hotel guests (19,770)</li>
+                                <li><strong>Opportunity</strong>: Emerging winter travel period not yet fully reflected in travel queries</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h3>UK Traveler Barriers Analysis (Q4 2024)</h3>
+                    <div class="data-grid">
+                        <div class="data-card">
+                            <h4>Top Barriers</h4>
+                            <ul>
+                                <li><strong>Destination Preference</strong>: 45% prefer other destinations <span class="change">-1pp since 2021</span></li>
+                                <li><strong>Cultural Concerns</strong>: 44% find laws/customs too restrictive <span class="change negative">+3pp</span></li>
+                                <li><strong>Perception of Locals</strong>: 27% heard people aren't friendly <span class="change negative">+19pp</span></li>
+                                <li><strong>Knowledge Gap</strong>: 24% don't know enough about the destination <span class="change negative">+11pp</span></li>
+                                <li><strong>Authenticity Concerns</strong>: 21% perceive it as "too fake" <span class="change positive">-5pp</span></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="data-card">
+                            <h4>Improving Perceptions</h4>
+                            <ul>
+                                <li><strong>Activities</strong>: Fewer people think "there's not much to do" <span class="change positive">-6pp</span></li>
+                                <li><strong>Weather Perception</strong>: Improved perception of climate <span class="change positive">-6pp</span></li>
+                                <li><strong>Value Perception</strong>: Fewer concerns about value for money <span class="change positive">-6pp</span></li>
+                                <li><strong>Authenticity</strong>: Decreasing concerns about authenticity <span class="change positive">-5pp</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="highlight-box">
+                        <h5>Critical Cultural Perception Issue</h5>
+                        <p>The most concerning trends are the significant increases in perception that locals aren't friendly (+19pp) and language barriers (+15pp), suggesting deteriorating cultural perception despite improvements in activity and value perceptions.</p>
+                    </div>
+                    
+                    <h3>Advanced Strategic Recommendations</h3>
+                    
+                    <div class="data-grid">
+                        <div class="recommendation-card">
+                            <h4>1. Media Allocation Optimization</h4>
+                            <p><strong>Recommendation</strong>: Implement a dynamic CPM bidding strategy with seasonal adjustments.</p>
+                            <ul>
+                                <li>Increase CPM bid thresholds by 30-40% during high-efficiency periods (Q4, Q1)</li>
+                                <li>Reduce CPM bid thresholds by 15-20% during low-efficiency periods (Q2, Q3)</li>
+                            </ul>
+                            <p><strong>Expected Impact</strong>: 15-18% improvement in overall query generation without budget increase</p>
+                        </div>
+                        
+                        <div class="recommendation-card">
+                            <h4>2. Consideration Stage Enhancement</h4>
+                            <p><strong>Recommendation</strong>: Develop a dedicated "Consideration Catalyst" campaign.</p>
+                            <ul>
+                                <li>Create content addressing the gap between awareness and intent</li>
+                                <li>Implement retargeting campaigns for users showing awareness but not consideration</li>
+                            </ul>
+                            <p><strong>Expected Impact</strong>: Reverse consideration decline and increase metric by 1.5-2.0pp</p>
+                        </div>
+                    </div>
+                    
+                    <div class="data-grid">
+                        <div class="recommendation-card">
+                            <h4>3. Tactical February Focus</h4>
+                            <p><strong>Recommendation</strong>: Capitalize on the emerging February opportunity.</p>
+                            <ul>
+                                <li>Develop "Winter Escape" themed packages specifically for February</li>
+                                <li>Target couples for Valentine's Day/romantic getaways</li>
+                            </ul>
+                            <p><strong>Expected Impact</strong>: 25-30% YoY growth in February travel queries for 2025</p>
+                        </div>
+                        
+                        <div class="recommendation-card">
+                            <h4>4. Booking Window Optimization</h4>
+                            <p><strong>Recommendation</strong>: Implement variable lead time marketing strategies.</p>
+                            <ul>
+                                <li>For December peak: Intensify campaigns in October (60-day window)</li>
+                                <li>Develop "Last Minute" campaign components with 30-45 day booking windows</li>
+                            </ul>
+                            <p><strong>Expected Impact</strong>: 8-10% increase in conversion rates for December-targeted campaigns</p>
+                        </div>
+                    </div>
+                    
+                    <div class="recommendation-card">
+                        <h4>5. Cultural Perception Improvement</h4>
+                        <p><strong>Recommendation</strong>: Address the significant increase in negative perceptions about locals and language barriers.</p>
+                        <ul>
+                            <li>Develop content featuring authentic interactions with friendly locals</li>
+                            <li>Create "Language No Barrier" campaign highlighting widespread English usage</li>
+                            <li>Partner with UK influencers to document positive cultural interactions</li>
+                            <li>Provide cultural context for local customs and laws that UK travelers find restrictive</li>
+                        </ul>
+                        <p><strong>Expected Impact</strong>: Reduce "people aren't friendly" perception by 10pp and language barrier concerns by 8pp</p>
+                    </div>
+                    
+                    <h3>Implementation Roadmap</h3>
+                    <div class="data-card">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
+                            <div>
+                                <h4>Immediate (Next 30 Days)</h4>
+                                <ul>
+                                    <li>Begin media allocation optimization</li>
+                                    <li>Initiate competitor analysis</li>
+                                    <li>Develop February 2026 opportunity planning</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4>Short-Term (60-90 Days)</h4>
+                                <ul>
+                                    <li>Launch "Consideration Catalyst" campaign</li>
+                                    <li>Implement variable lead time strategies</li>
+                                    <li>Begin content strategy refinement</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4>Medium-Term (90-180 Days)</h4>
+                                <ul>
+                                    <li>Full implementation of season-specific content strategies</li>
+                                    <li>Roll out "Mature Market Defender" strategy</li>
+                                    <li>Develop comprehensive loyalty program</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4>Long-Term (180+ Days)</h4>
+                                <ul>
+                                    <li>Evaluate effectiveness and refine strategies</li>
+                                    <li>Develop integration with other high-potential markets</li>
+                                    <li>Begin planning for 2026 forecast implementation</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="highlight-box" style="margin-top: 25px;">
+                        <h5>ROI Projection</h5>
+                        <p>The projected ROI for implementing these recommendations is 3.2:1 based on industry benchmarks and the UK market's historical performance.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Print Button -->
+    <button class="print-btn" onclick="window.print()">🖨️</button>
+    
+    <script>
+        // UK Market Data
+        const ukData = {
+            impressions: {
+                '2023': [39266229, 57795441, 100046948, 25065565, 30007835, 20505990, 20370260, 47983271, 22843633, 35095789, 105077019, 151167994],
+                '2024': [39767259, 20577624, 50003357, 109331811, 45176614, 37914837, 56385822, 30416431, 55798934, 111534185, 136058361, 47304711],
+                '2025': [63743254, 70187219, 119431507, 149301104, 96899625, 64959531, 63978941, 63978941, 45474202, 51467010, 100082976, 83358485]
+            },
+            travelQueries: {
+                '2023': [89.36, 73.07, 79.49, 91.35, 76.72, 71.75, 86.36, 86.07, 89.66, 102.53, 90.83, 91.73],
+                '2024': [124.85, 98.80, 99.09, 92.34, 86.94, 82.80, 86.15, 92.83, 99.68, 110.86, 97.25, 99.18],
+                '2025': {
+                    'moderate': [140.09, 116.37, 121.81, 97.33, 88.33, 80.16, 84.87, 95.97, 116.99, 141.94, 107.87, 121.92],
+                    'conservative': [132.84, 110.31, 115.46, 92.27, 83.75, 75.98, 80.44, 90.96, 110.90, 134.59, 102.26, 115.57],
+                    'ambitious': [147.34, 122.43, 128.15, 102.38, 92.92, 84.35, 89.30, 100.97, 123.07, 149.28, 113.49, 128.28]
+                }
+            },
+            flightSearches: {
+                '2023': [10767, 6511, 7372, 6642, 6345, 6479, 9945, 9989, 10744, 11213, 12135, 11526],
+                '2024': [17665, 13368, 15826, 13953, 17633, 17415, 20346, 15218, 22007, 19997, 12760, 15876]
+            },
+            hotelGuests: {
+                '2023': [12304, 13858, 12817, 12797, 11185, 8253, 7009, 9876, 9170, 18296, 17845, 17082],
+                '2024': [14154, 19770, 16710, 19461, 17258, 12160, 13222, 17891, 14968, 24484, 20531, 28534]
+            }
+        };
+        
+        // Chart instances
+        let queriesChart, impressionsChart, flightsChart, hotelChart;
+        
+        // Months labels
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            
+            // Scenario selector buttons
+            const scenarioButtons = document.querySelectorAll('.scenario-btn');
+            scenarioButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Update active button
+                    scenarioButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update chart based on selected scenario
+                    updateQueriesChart(this.getAttribute('data-scenario'));
+                });
+            });
+            
+            // Tab buttons
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Update active tab button
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update active tab content
+                    const tabId = this.getAttribute('data-tab');
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                });
+            });
+        });
+        
+        function initCharts() {
+            // Travel Queries Chart
+            const queriesCtx = document.getElementById('queries-chart').getContext('2d');
+            queriesChart = new Chart(queriesCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: '2024 Actual',
+                            data: ukData.travelQueries['2024'],
+                            borderColor: 'rgba(255, 159, 64, 1)',
+                            backgroundColor: 'rgba(255, 159, 64, 0.1)',
+                            borderWidth: 2,
+                            fill: false
+                        },
+                        {
+                            label: '2025 Moderate',
+                            data: ukData.travelQueries['2025']['moderate'],
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                            borderWidth: 2,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Travel Queries Index'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Month'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'UK Travel Queries Forecast',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Impressions Chart
+            const impressionsCtx = document.getElementById('impressions-chart').getContext('2d');
+            impressionsChart = new Chart(impressionsCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: '2023',
+                            data: ukData.impressions['2023'],
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                            borderWidth: 2,
+                            fill: false
+                        },
+                        {
+                            label: '2024',
+                            data: ukData.impressions['2024'],
+                            borderColor: 'rgba(255, 206, 86, 1)',
+                            backgroundColor: 'rgba(255, 206, 86, 0.1)',
+                            borderWidth: 2,
+                            fill: false
+                        },
+                        {
+                            label: '2025 (Planned)',
+                            data: ukData.impressions['2025'],
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                            borderWidth: 2,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Impressions'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+                                    if (value >= 1000) return (value / 1000).toFixed(1) + 'K';
+                                    return value;
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Month'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'UK Media Impressions',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Flight Searches Chart
+            const flightsCtx = document.getElementById('flights-chart').getContext('2d');
+            flightsChart = new Chart(flightsCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: '2023',
+                            data: ukData.flightSearches['2023'],
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                            borderWidth: 2,
+                            fill: false
+                        },
+                        {
+                            label: '2024',
+                            data: ukData.flightSearches['2024'],
+                            borderColor: 'rgba(255, 159, 64, 1)',
+                            backgroundColor: 'rgba(255, 159, 64, 0.1)',
+                            borderWidth: 2,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Flight Searches'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Month'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'UK Flight Searches',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Hotel Guests Chart
+            const hotelCtx = document.getElementById('hotel-chart').getContext('2d');
+            hotelChart = new Chart(hotelCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: '2023',
+                            data: ukData.hotelGuests['2023'],
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                            borderWidth: 2,
+                            fill: false
+                        },
+                        {
+                            label: '2024',
+                            data: ukData.hotelGuests['2024'],
+                            borderColor: 'rgba(255, 159, 64, 1)',
+                            backgroundColor: 'rgba(255, 159, 64, 0.1)',
+                            borderWidth: 2,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Hotel Guests'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Month'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'UK Hotel Guests',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateQueriesChart(scenario) {
+            // Clear existing datasets
+            queriesChart.data.datasets = [];
+            
+            if (scenario === 'actual') {
+                // Show 2023 and 2024 actual data
+                queriesChart.data.datasets.push({
+                    label: '2023 Actual',
+                    data: ukData.travelQueries['2023'],
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                    borderWidth: 2,
+                    fill: false
+                });
+                
+                queriesChart.data.datasets.push({
+                    label: '2024 Actual',
+                    data: ukData.travelQueries['2024'],
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    backgroundColor: 'rgba(255, 159, 64, 0.1)',
+                    borderWidth: 2,
+                    fill: false
+                });
+            } else {
+                // Show 2024 actual and 2025 forecast for selected scenario
+                queriesChart.data.datasets.push({
+                    label: '2024 Actual',
+                    data: ukData.travelQueries['2024'],
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    backgroundColor: 'rgba(255, 159, 64, 0.1)',
+                    borderWidth: 2,
+                    fill: false
+                });
+                
+                queriesChart.data.datasets.push({
+                    label: `2025 ${scenario.charAt(0).toUpperCase() + scenario.slice(1)}`,
+                    data: ukData.travelQueries['2025'][scenario],
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    borderWidth: 2,
+                    fill: false
+                });
+            }
+            
+            // Update chart
+            queriesChart.update();
+        }
+    </script>
+</body>
+</html>
